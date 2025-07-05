@@ -1,4 +1,4 @@
-import java.util.ArrayList;
+import java.util.*;
 import java.util.List;
 import java.util.Scanner;
 
@@ -37,9 +37,7 @@ class Board {
         this.movesMade = 0;
         // Initialize the grid with empty spaces
         for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                grid[i][j] = ' ';
-            }
+            Arrays.fill(grid[i], ' ');
         }
     }
 

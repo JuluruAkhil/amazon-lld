@@ -93,6 +93,60 @@ class SlidingWindowAlgo implements RateLimitAlgo {
 }
 
 /**
+ * A concrete implementation of the RateLimitAlgo using the Fixed Window
+ * algorithm.
+ * It tracks the count of requests per client in each fixed window interval.
+ */
+class FixedWindowAlgo implements RateLimitAlgo {
+    private static class WindowInfo {
+        long windowStartMillis;
+        int requestCount;
+    }
+
+    private final int capacity; // Maximum number of requests allowed per window
+    private final long windowDurationMillis; // The time window duration in milliseconds
+    private final Map<String, WindowInfo> clientWindows;
+
+    public FixedWindowAlgo(int capacity, int duration, TimeUnit timeUnit) {
+        this.capacity = capacity;
+        this.windowDurationMillis = timeUnit.toMillis(duration);
+        this.clientWindows = new HashMap<>();
+    }
+
+    @Override
+    public synchronized boolean allow(String clientId) {
+        long currentTimeMillis = Instant.now().toEpochMilli();
+        WindowInfo info = clientWindows.computeIfAbsent(clientId, k -> new WindowInfo());
+        long windowStart = info.windowStartMillis;
+        if (windowStart == 0 || currentTimeMillis - windowStart >= windowDurationMillis) {
+            // New window
+            info.windowStartMillis = currentTimeMillis;
+            info.requestCount = 1;
+            return true;
+        } else {
+            if (info.requestCount < capacity) {
+                info.requestCount++;
+                return true;
+            } else {
+                return false;
+            }
+        }
+    }
+
+    @Override
+    public synchronized int getRemaining(String clientId) {
+        long currentTimeMillis = Instant.now().toEpochMilli();
+        WindowInfo info = clientWindows.getOrDefault(clientId, new WindowInfo());
+        long windowStart = info.windowStartMillis;
+        if (windowStart == 0 || currentTimeMillis - windowStart >= windowDurationMillis) {
+            return capacity;
+        } else {
+            return Math.max(0, capacity - info.requestCount);
+        }
+    }
+}
+
+/**
  * The RateLimiter class acts as a facade, providing a simple interface to the
  * underlying rate limiting algorithm.
  */

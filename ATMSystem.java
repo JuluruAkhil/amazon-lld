@@ -34,7 +34,7 @@ class User {
      * 
      * @return true if the withdrawal was successful, false otherwise.
      */
-    public boolean withdrawMoney(int amount) {
+    public synchronized boolean withdrawMoney(int amount) {
         if (amount > balance) {
             System.out.println("User " + id + ": Insufficient funds for withdrawal.");
             return false;
@@ -48,7 +48,7 @@ class User {
     /**
      * Deposits a specified amount into the user's balance.
      */
-    public void depositMoney(int amount) {
+    public synchronized void depositMoney(int amount) {
         balance += amount;
         transactionHistory.add(new Transaction(DEPOSIT_CT, amount));
         System.out.println("User " + id + " " + DEPOSIT_CT + " $" + amount + ". New balance: $" + balance);
