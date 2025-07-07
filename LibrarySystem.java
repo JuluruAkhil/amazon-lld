@@ -1,5 +1,3 @@
-public
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -223,18 +221,16 @@ public class LibrarySystem {
 
         // Execution
         user1.checkoutBook(b1); // Alice checks out The Great Gatsby
-        user2.reserve(b1);      // Bob tries to reserve it, succeeds
+        user2.reserve(b1); // Bob tries to reserve it, succeeds
         user2.checkoutBook(b1); // Bob tries to check it out, fails
-        
+
         System.out.println();
         library.showAllBooks();
-        
-        user1.returnBook(b1);   // Alice returns The Great Gatsby
+
+        user1.returnBook(b1); // Alice returns The Great Gatsby
         user2.checkoutBook(b1); // Now Bob can check it out
-        
+
         System.out.println();
         library.showAllBooks();
     }
-}{
-
 }

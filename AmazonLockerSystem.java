@@ -7,117 +7,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 
-/**
- * Main class to run the Amazon Locker System simulation.
- * All supporting classes are defined within this single file for ease of use.
- */
-public class AmazonLockerSystem {
-
-    public static void main(String[] args) {
-        System.out.println("--- Setting up Amazon Locker System ---");
-        // Initialize the main service
-        AmazonLockerService service = new AmazonLockerService();
-
-        // Create and setup a new locker location
-        LockerLocation location = new LockerLocation("Downtown", "123 Main St, Chicago");
-        location.addLocker(LockerFactory.createLocker(101, "small"));
-        location.addLocker(LockerFactory.createLocker(102, "small"));
-        location.addLocker(LockerFactory.createLocker(201, "medium"));
-        service.addLocation(location);
-        System.out.println("Locker location 'Downtown' created with 3 lockers.");
-
-        // Create users and packages for the demo
-        Customer customer1 = new Customer("John Doe", "john.doe@example.com");
-        DeliveryAgent agent1 = new DeliveryAgent("Speedy Delivery Inc.", "agent007");
-        Package package1 = PackageFactory.createPackage(9001, customer1, "small");
-        System.out.println("Created package " + package1.getId() + " for " + customer1.getName());
-
-        // --- DEMO 1: Successful Delivery and Pickup ---
-        System.out.println("\n--- DEMO 1: Successful Delivery and Pickup ---");
-        // 1. Deliver the package
-        Integer otp = service.deliver(package1, agent1, "Downtown");
-        if (otp != null) {
-            System.out.println(
-                    "SUCCESS: Package " + package1.getId() + " delivered to Downtown location. OTP is: " + otp);
-        } else {
-            System.out.println("FAILURE: Could not deliver package " + package1.getId());
-        }
-
-        // 2. Customer picks up the package with the correct OTP
-        Package pickedUpPackage = service.pickup(package1.getId(), otp, "Downtown");
-        if (pickedUpPackage != null) {
-            System.out.println("SUCCESS: Customer " + pickedUpPackage.getCustomer().getName() + " picked up package "
-                    + pickedUpPackage.getId() + ".");
-            System.out.println("Package status: " + pickedUpPackage.getStatus());
-        } else {
-            System.out.println("FAILURE: Pickup failed for package " + package1.getId());
-        }
-
-        // --- DEMO 2: Expired Package Return ---
-        System.out.println("\n--- DEMO 2: Expired Package Return ---");
-        Package package2 = new Package(9002, customer1, new Small());
-        // Manually set an old delivery date to simulate expiry
-        package2.setExpiry(-5); // Set expiry to 5 days ago
-
-        Integer otp2 = service.deliver(package2, agent1, "Downtown");
-        if (otp2 != null) {
-            System.out.println("INFO: Package " + package2.getId() + " delivered, but it is already expired.");
-        }
-
-        // Run the return process for expired packages
-        System.out.println("Running expired package return process...");
-        List<Package> returned = service.returnExpired("Downtown");
-
-        if (!returned.isEmpty()) {
-            System.out.println("SUCCESS: Returned " + returned.size() + " expired package(s).");
-            for (Package p : returned) {
-                System.out.println("- Returned Package ID: " + p.getId());
-            }
-        } else {
-            System.out.println("INFO: No expired packages found to return.");
-        }
-    }
-}
-
-// factory pattern for locker
-class LockerFactory {
-    public static Locker createLocker(int lockerId, String size) {
-        Size lockerSize;
-        switch (size) {
-            case "small":
-                lockerSize = new Small();
-                break;
-            case "medium":
-                lockerSize = new Medium();
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid size for locker: " + size);
-        }
-        return new Locker(lockerId, lockerSize);
-    }
-}
-
-// factory pattern for package
-class PackageFactory {
-    public static Package createPackage(int id, Customer customer, String size) {
-        Size packageSize;
-        switch (size) {
-            case "small":
-                packageSize = new Small();
-                break;
-            case "medium":
-                packageSize = new Medium();
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid size for package: " + size);
-        }
-        return new Package(id, customer, packageSize);
-    }
-}
-
 // STEP 1: SIZE CLASSES
-// These classes define the different sizes for packages and lockers.
-
 /**
  * Base class for the size of a locker or a package.
  */
@@ -158,8 +48,6 @@ class Medium extends Size {
 }
 
 // STEP 2: USER CLASSES
-// Simple classes to represent the customer and the delivery agent.
-
 /**
  * Represents a customer who receives packages.
  */
@@ -199,8 +87,6 @@ class DeliveryAgent {
 }
 
 // STEP 3: CORE BUSINESS OBJECTS
-// These are the main entities: Package, Locker, and Otp.
-
 /**
  * Represents a package with its details and status.
  */
@@ -310,9 +196,44 @@ class Otp {
     }
 }
 
-// STEP 4: LOCATION MANAGEMENT
-// Manages a collection of lockers and active deliveries at a physical location.
+// STEP 4: FACTORY CLASSES
+// factory pattern for locker
+class LockerFactory {
+    public static Locker createLocker(int lockerId, String size) {
+        Size lockerSize;
+        switch (size) {
+            case "small":
+                lockerSize = new Small();
+                break;
+            case "medium":
+                lockerSize = new Medium();
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid size for locker: " + size);
+        }
+        return new Locker(lockerId, lockerSize);
+    }
+}
 
+// factory pattern for package
+class PackageFactory {
+    public static Package createPackage(int id, Customer customer, String size) {
+        Size packageSize;
+        switch (size) {
+            case "small":
+                packageSize = new Small();
+                break;
+            case "medium":
+                packageSize = new Medium();
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid size for package: " + size);
+        }
+        return new Package(id, customer, packageSize);
+    }
+}
+
+// STEP 5: LOCATION MANAGEMENT
 /**
  * A helper record to store all information about an active delivery.
  */
@@ -355,9 +276,7 @@ class LockerLocation {
     }
 }
 
-// STEP 5: MAIN SERVICE (FACADE)
-// The main service that orchestrates all operations.
-
+// STEP 6: MAIN SERVICE (FACADE)
 /**
  * Main service managing all locker locations and operations.
  */
@@ -430,5 +349,78 @@ class AmazonLockerService {
             }
         }
         return expiredPackages;
+    }
+}
+
+// STEP 7: MAIN CLASS
+/**
+ * Main class to run the Amazon Locker System simulation.
+ * All supporting classes are defined within this single file for ease of use.
+ */
+public class AmazonLockerSystem {
+
+    public static void main(String[] args) {
+        System.out.println("--- Setting up Amazon Locker System ---");
+        // Initialize the main service
+        AmazonLockerService service = new AmazonLockerService();
+
+        // Create and setup a new locker location
+        LockerLocation location = new LockerLocation("Downtown", "123 Main St, Chicago");
+        location.addLocker(LockerFactory.createLocker(101, "small"));
+        location.addLocker(LockerFactory.createLocker(102, "small"));
+        location.addLocker(LockerFactory.createLocker(201, "medium"));
+        service.addLocation(location);
+        System.out.println("Locker location 'Downtown' created with 3 lockers.");
+
+        // Create users and packages for the demo
+        Customer customer1 = new Customer("John Doe", "john.doe@example.com");
+        DeliveryAgent agent1 = new DeliveryAgent("Speedy Delivery Inc.", "agent007");
+        Package package1 = PackageFactory.createPackage(9001, customer1, "small");
+        System.out.println("Created package " + package1.getId() + " for " + customer1.getName());
+
+        // --- DEMO 1: Successful Delivery and Pickup ---
+        System.out.println("\n--- DEMO 1: Successful Delivery and Pickup ---");
+        // 1. Deliver the package
+        Integer otp = service.deliver(package1, agent1, "Downtown");
+        if (otp != null) {
+            System.out.println(
+                    "SUCCESS: Package " + package1.getId() + " delivered to Downtown location. OTP is: " + otp);
+        } else {
+            System.out.println("FAILURE: Could not deliver package " + package1.getId());
+        }
+
+        // 2. Customer picks up the package with the correct OTP
+        Package pickedUpPackage = service.pickup(package1.getId(), otp, "Downtown");
+        if (pickedUpPackage != null) {
+            System.out.println("SUCCESS: Customer " + pickedUpPackage.getCustomer().getName() + " picked up package "
+                    + pickedUpPackage.getId() + ".");
+            System.out.println("Package status: " + pickedUpPackage.getStatus());
+        } else {
+            System.out.println("FAILURE: Pickup failed for package " + package1.getId());
+        }
+
+        // --- DEMO 2: Expired Package Return ---
+        System.out.println("\n--- DEMO 2: Expired Package Return ---");
+        Package package2 = new Package(9002, customer1, new Small());
+        // Manually set an old delivery date to simulate expiry
+        package2.setExpiry(-5); // Set expiry to 5 days ago
+
+        Integer otp2 = service.deliver(package2, agent1, "Downtown");
+        if (otp2 != null) {
+            System.out.println("INFO: Package " + package2.getId() + " delivered, but it is already expired.");
+        }
+
+        // Run the return process for expired packages
+        System.out.println("Running expired package return process...");
+        List<Package> returned = service.returnExpired("Downtown");
+
+        if (!returned.isEmpty()) {
+            System.out.println("SUCCESS: Returned " + returned.size() + " expired package(s).");
+            for (Package p : returned) {
+                System.out.println("- Returned Package ID: " + p.getId());
+            }
+        } else {
+            System.out.println("INFO: No expired packages found to return.");
+        }
     }
 }
